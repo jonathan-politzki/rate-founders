@@ -1,3 +1,5 @@
+// backend/models/Founder.js
+
 const mongoose = require('mongoose');
 
 const RatingSchema = new mongoose.Schema({
@@ -9,10 +11,12 @@ const RatingSchema = new mongoose.Schema({
 });
 
 const FounderSchema = new mongoose.Schema({
-  name: { type: String, unique: true },
+  name: String,
   company: String,
   profilePicture: String,
   ratings: [RatingSchema],
+  linkedin: { type: String, unique: true, sparse: true },
+  twitter: { type: String, unique: true, sparse: true },
 });
 
 module.exports = mongoose.model('Founder', FounderSchema);

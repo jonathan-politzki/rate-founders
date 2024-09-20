@@ -10,10 +10,19 @@ function Profile() {
   const [founder, setFounder] = useState(null);
   const [ratings, setRatings] = useState({ nice: 0, talent: 0, intelligence: 0, experience: 0 });
   const [comment, setComment] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [founderDetails, setFounderDetails] = useState({ name: '', company: '' });
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/founders/${name}`)
-      .then((response) => setFounder(response.data))
+    axios
+      .get(`http://localhost:5000/api/founders/${name}`)
+      .then((response) => {
+        setFounder(response.data);
+        if (!response.data.name || !response.data.company) {
+          setIsEditing(true);
+          setFounderDetails({ name: response.data.name || '', company: response.data.company || '' });
+        }
+      })
       .catch(() => setFounder(null));
   }, [name]);
 
@@ -22,13 +31,55 @@ function Profile() {
   };
 
   const submitRating = () => {
-    axios.post('http://localhost:5000/api/founders/rate', { name, ratings: { ...ratings, comment } });
+    axios.post(
+      'http://localhost:5000/api/founders/rate',
+      { name: founder.name, ratings: { ...ratings, comment } },
+      { withCredentials: true }
+    );
+  };
+
+  const updateFounderDetails = () => {
+    axios
+      .post(
+        'http://localhost:5000/api/founders/update',
+        { identifier: name, ...founderDetails },
+        { withCredentials: true }
+      )
+      .then((response) => {
+        setFounder(response.data);
+        setIsEditing(false);
+      });
   };
 
   if (!founder) {
     return (
       <Container style={{ marginTop: '50px', textAlign: 'center' }}>
         <Typography variant="h5">Founder not found.</Typography>
+      </Container>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <Container maxWidth="sm" style={{ marginTop: '50px' }}>
+        <Typography variant="h5">Enter Founder Details</Typography>
+        <TextField
+          label="Name"
+          value={founderDetails.name}
+          onChange={(e) => setFounderDetails({ ...founderDetails, name: e.target.value })}
+          fullWidth
+          style={{ marginBottom: '20px' }}
+        />
+        <TextField
+          label="Company"
+          value={founderDetails.company}
+          onChange={(e) => setFounderDetails({ ...founderDetails, company: e.target.value })}
+          fullWidth
+          style={{ marginBottom: '20px' }}
+        />
+        <Button variant="contained" color="primary" onClick={updateFounderDetails}>
+          Save
+        </Button>
       </Container>
     );
   }

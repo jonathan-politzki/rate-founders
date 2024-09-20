@@ -2,24 +2,42 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Container, Typography, Box } from '@mui/material';
+import { Button, Container, Typography, Box, TextField } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 
 function Home() {
+  const [founderLink, setFounderLink] = React.useState('');
   const navigate = useNavigate();
 
   const handleSearch = async () => {
     try {
       const response = await axios.get('http://localhost:5000/auth/current_user', { withCredentials: true });
       if (response.data) {
-        navigate('/search');
+        // Extract identifier from the link
+        let identifier = founderLink.trim();
+
+        if (identifier.includes('linkedin.com')) {
+          const match = identifier.match(/linkedin\.com\/in\/([^\/]+)/);
+          if (match && match[1]) {
+            identifier = `linkedin:${match[1]}`;
+          }
+        } else if (identifier.includes('twitter.com') || identifier.includes('x.com')) {
+          const match = identifier.match(/(?:twitter\.com|x\.com)\/([^\/]+)/);
+          if (match && match[1]) {
+            identifier = `twitter:${match[1]}`;
+          }
+        } else {
+          alert('Please enter a valid LinkedIn or X.com link.');
+          return;
+        }
+
+        navigate(`/profile/${encodeURIComponent(identifier)}`);
       } else {
         window.location.href = 'http://localhost:5000/auth/twitter';
       }
     } catch (error) {
       console.error(error);
-      // Optionally, you can add some user feedback here
     }
   };
 
@@ -100,6 +118,14 @@ function Home() {
             <Typography variant="h6" color="textSecondary" gutterBottom>
               Help founders separate the signal from the noise. Leave your good/bad experience to save others time.
             </Typography>
+            <TextField
+              label="Enter Founder's LinkedIn or X.com Link"
+              variant="outlined"
+              fullWidth
+              value={founderLink}
+              onChange={(e) => setFounderLink(e.target.value)}
+              sx={{ marginBottom: '20px' }}
+            />
             <Button
               variant="contained"
               color="primary"
